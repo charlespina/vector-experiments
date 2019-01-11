@@ -88,24 +88,38 @@ function bilinearSample(data, t) {
 export default class AudioTest {
   constructor() {
     this.isInitialized = false;
+
+
+    let setupOnce = false;
+    window.document.addEventListener('click', () => {
+      if (setupOnce) return;
+      setupOnce = true;
+
+      setupAudioStream().then(this.postSetupAudioStream.bind(this));
+    });
+
+    console.log('constructed');
+
+
+  }
+
+  postSetupAudioStream(result) {
+    console.log(result);
+
     const kFftSize = 32;
 
-    setupAudioStream().then((result) => {
-      console.log(result);
+    const { analyser, context, source, stream } = result;
+    this.analyser = result.analyser;
+    this.audioContext = result.context;
+    this.audioSource = result.source;
+    this.audioStream = result.stream;
+    this.isInitialized = true;
 
-      const { analyser, context, source, stream } = result;
-      this.analyser = result.analyser;
-      this.audioContext = result.context;
-      this.audioSource = result.source;
-      this.audioStream = result.stream;
-      this.isInitialized = true;
-
-      this.analyser.fftSize = kFftSize;
-      this.analyser.smoothingTimeConstraint = 1.0; // default is 0.8; 0 is no smoothing; 1 is max
-      this.fftTimeData = new BufferArray(this.analyser.frequencyBinCount, 3);
-      this.fftFreqData = new Float32Array(this.analyser.frequencyBinCount);
-      this.setupPaths();
-    });
+    this.analyser.fftSize = kFftSize;
+    this.analyser.smoothingTimeConstraint = 1.0; // default is 0.8; 0 is no smoothing; 1 is max
+    this.fftTimeData = new BufferArray(this.analyser.frequencyBinCount, 3);
+    this.fftFreqData = new Float32Array(this.analyser.frequencyBinCount);
+    this.setupPaths();
   }
 
   setupPaths() {
@@ -145,7 +159,6 @@ export default class AudioTest {
     // this.analyser.getFloatTimeDomainData(this.fftTimeData.front);
     // this.analyser.getFloatFrequencyData(this.fftFreqData);
     this.analyser.getFloatTimeDomainData(this.fftTimeData.front);
-
 
     /*
     this.freqPath.segments.forEach((segment, i) => {
